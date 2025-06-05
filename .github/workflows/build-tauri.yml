@@ -11,6 +11,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
+    if: matrix.name != 'linux-arm'
     name: "Test Build"
 
     runs-on: ${{ matrix.os }}
@@ -26,8 +27,6 @@ jobs:
             tauri_target: ["x86_64-unknown-linux-gnu"]
           - os: ubuntu-latest
             name: linux-arm
-            targets: "aarch64-unknown-linux-gnu"
-            tauri_target: ["aarch64-unknown-linux-gnu"]
           - os: macos-latest
             name: mac
             targets: "aarch64-apple-darwin,x86_64-apple-darwin"
@@ -104,8 +103,57 @@ jobs:
             app/tauri/target/*/release/bundle/macos/**/*.tar.gz
             app/tauri/target/*/release/bundle/**/*.zip
             app/tauri/target/*/release/bundle/**/*.sig
+  build-linux-arm:
+    name: Build Linux ARM
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./app/tauri -> target"
+          cache-on-failure: true
+
+      - name: Build app
+        uses: pguyot/arm-runner-action@v2.6.5
+        with:
+          base_image: https://dietpi.com/downloads/images/DietPi_RPi5-ARMv8-Bookworm.img.xz
+          cpu: cortex-a72
+          bind_mount_repository: true
+          image_additional_mb: 10240
+          optimize_image: no
+          commands: |
+            export HOME=/root
+            export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+
+            apt-get update -y --allow-releaseinfo-change
+            apt-get install -y --no-install-recommends --no-install-suggests \
+              curl libwebkit2gtk-4.1-dev build-essential libssl-dev libgtk-3-dev \
+              libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 file
+
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            . "$HOME/.cargo/env"
+            curl -fsSL https://deb.nodesource.com/setup_lts.x | bash
+            apt-get install -y nodejs
+
+            yarn install --immutable --network-timeout 120000
+
+            yarn build:tauri --config ./app/tauri/release.conf.json --verbose
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-linux-arm
+          path: |
+            app/tauri/target/*/release/bundle/**/*.AppImage
+            app/tauri/target/*/release/bundle/**/*.deb
+            app/tauri/target/*/release/bundle/**/*.zip
+            app/tauri/target/*/release/bundle/**/*.sig
+
   generate-updater-file:
-    needs: build
+    needs: [build, build-linux-arm]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
