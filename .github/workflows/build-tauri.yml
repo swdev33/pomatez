@@ -121,6 +121,9 @@ jobs:
           bind_mount_repository: true
           image_additional_mb: 10240
           optimize_image: no
+          env:
+            TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+            TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
           commands: |
             export HOME=/root
             export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
