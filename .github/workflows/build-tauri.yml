@@ -115,15 +115,15 @@ jobs:
 
       - name: Build app
         uses: pguyot/arm-runner-action@v2.6.5
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           base_image: https://dietpi.com/downloads/images/DietPi_RPi5-ARMv8-Bookworm.img.xz
           cpu: cortex-a72
           bind_mount_repository: true
           image_additional_mb: 10240
           optimize_image: no
-          env:
-            TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-            TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
           commands: |
             export HOME=/root
             export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
