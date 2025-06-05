@@ -11,7 +11,6 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    if: matrix.name != 'linux-arm'
     name: "Test Build"
 
     runs-on: ${{ matrix.os }}
@@ -25,8 +24,6 @@ jobs:
             # Cross Compiling is also more of a pain it seems for linux atm, explore later
             targets: "x86_64-unknown-linux-gnu"
             tauri_target: ["x86_64-unknown-linux-gnu"]
-          - os: ubuntu-latest
-            name: linux-arm
           - os: macos-latest
             name: mac
             targets: "aarch64-apple-darwin,x86_64-apple-darwin"
